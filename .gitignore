@@ -25,6 +25,7 @@ Thumbs.db
 # Local artifacts
 .superpowers/
 docs/
+TECH_SPEC_RepoRadar.md
 
 # Build/temp
 tmp/
