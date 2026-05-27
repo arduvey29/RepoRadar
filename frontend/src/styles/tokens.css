@@ -1,0 +1,28 @@
+:root {
+  --bg: #0a0a0b;
+  --bg-elev-1: #0f0f12;
+  --bg-elev-2: #111114;
+  --border: #1d1d22;
+  --border-hover: #2a2a32;
+  --text: #e8e8ea;
+  --text-muted: #8a8a93;
+  --text-dim: #6a6a73;
+  --tile-good: #4cc38a;
+  --tile-mid: #f0b941;
+  --tile-bad: #ff5d5d;
+
+  /* default accent (overridden by [data-grade]) */
+  --accent: #f0b941;
+  --accent-tint: rgba(240,185,65,0.08);
+
+  --motion-fast: 120ms ease-out;
+  --motion-base: 180ms ease-out;
+}
+
+[data-grade="A"] { --accent: #4cc38a; --accent-tint: rgba(76,195,138,0.08); }
+[data-grade="B"] { --accent: #f0b941; --accent-tint: rgba(240,185,65,0.08); }
+[data-grade="C"] { --accent: #f08a3c; --accent-tint: rgba(240,138,60,0.08); }
+[data-grade="D"], [data-grade="F"] { --accent: #ff5d5d; --accent-tint: rgba(255,93,93,0.08); }
+
+html, body, #root { background: var(--bg); color: var(--text); min-height: 100%; }
+body { font-family: Inter, system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
