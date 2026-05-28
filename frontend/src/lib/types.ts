@@ -24,6 +24,7 @@ export interface ReportResult {
   overall_score: number
   overall_grade: string
   dimensions: DimensionResult[]
+  verdict: string
   synthesis: string
   top_fixes: string[]
   generated_at: string

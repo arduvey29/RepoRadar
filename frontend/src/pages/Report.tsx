@@ -13,6 +13,7 @@ export function Report() {
   const { id } = useParams()
   const nav = useNavigate()
   const [report, setReport] = useState<ReportResult | null>(null)
+  const [highlightKey, setHighlightKey] = useState<string | null>(null)
 
   useEffect(() => {
     // Phase 1: read from mocks only. Phase 2+: fetch from API.
@@ -28,11 +29,25 @@ export function Report() {
   return (
     <main data-grade={report.overall_grade} className="min-h-screen pb-16">
       <div className="max-w-3xl mx-auto p-6 space-y-6">
-        <Hero report={report} />
+        <Hero
+          report={report}
+          highlightKey={highlightKey}
+          onHoverDimension={setHighlightKey}
+          onSelectDimension={scrollToDim}
+        />
         <DimensionGrid dimensions={report.dimensions} onSelect={scrollToDim} />
-        <ShareBar reportId={report.report_id} onReanalyze={() => nav("/")} />
+        <ShareBar
+          reportId={report.report_id}
+          grade={report.overall_grade}
+          score={report.overall_score}
+          onReanalyze={() => nav("/")}
+        />
         <TopFixes fixes={report.top_fixes} />
-        <SynthesisPanel text={report.synthesis} />
+        <SynthesisPanel
+          report={report}
+          highlightKey={highlightKey}
+          onHoverDimension={setHighlightKey}
+        />
         <div className="space-y-4">
           {report.dimensions.map(d => <DimensionDetail key={d.key} dim={d} />)}
         </div>

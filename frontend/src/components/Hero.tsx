@@ -1,14 +1,39 @@
-import { ScoreGauge } from "./ScoreGauge"
+import type { ReactNode } from "react"
+import { RadarChart } from "./RadarChart"
+import { useCountUp } from "../lib/useTween"
 import type { ReportResult } from "../lib/types"
 
-export function Hero({ report }: { report: ReportResult }) {
+interface Props {
+  report: ReportResult
+  highlightKey?: string | null
+  onHoverDimension?: (key: string | null) => void
+  onSelectDimension?: (key: string) => void
+}
+
+export function Hero({ report, highlightKey, onHoverDimension, onSelectDimension }: Props) {
+  const score = useCountUp(report.overall_score)
   return (
-    <header className="flex items-center gap-5 p-7 rounded-lg border border-border" style={{ background: "linear-gradient(180deg, var(--accent-tint) 0%, var(--bg) 60%)" }}>
-      <ScoreGauge score={report.overall_score} />
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{report.repo_name}</h1>
-        <p className="text-text-muted text-sm mt-1">Repository health · audited just now</p>
-        <div className="mt-2 flex gap-1.5 flex-wrap">
+    <header
+      className="flex flex-col sm:flex-row items-center gap-6 p-7 rounded-lg border border-border"
+      style={{ background: "linear-gradient(180deg, var(--accent-tint) 0%, var(--bg) 60%)" }}
+    >
+      <RadarChart
+        dimensions={report.dimensions}
+        size={300}
+        animateIn
+        sweep
+        highlightKey={highlightKey}
+        onHoverDimension={onHoverDimension}
+        onSelectDimension={onSelectDimension}
+      />
+      <div className="text-center sm:text-left">
+        <div className="text-text-muted text-sm">Repository health</div>
+        <h1 className="text-2xl font-semibold tracking-tight mt-0.5">{report.repo_name}</h1>
+        <div className="mt-1 text-4xl font-bold tracking-tight" style={{ color: "var(--accent)" }}>
+          {score.toFixed(1)}
+          <span className="text-text-dim text-lg font-normal"> / 10 · {report.overall_grade}</span>
+        </div>
+        <div className="mt-3 flex gap-1.5 flex-wrap justify-center sm:justify-start">
           <Chip>Grade {report.overall_grade}</Chip>
           <Chip>6 dimensions</Chip>
           <Chip>Public</Chip>
@@ -18,6 +43,10 @@ export function Hero({ report }: { report: ReportResult }) {
   )
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
-  return <span className="inline-block px-2 py-0.5 border border-border rounded-full text-xs text-text-muted">{children}</span>
+function Chip({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-block px-2 py-0.5 border border-border rounded-full text-xs text-text-muted">
+      {children}
+    </span>
+  )
 }

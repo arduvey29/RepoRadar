@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { EmbedBadgeModal } from "./EmbedBadgeModal"
 
-interface Props { reportId: string; onReanalyze: () => void }
+interface Props { reportId: string; grade: string; score: number; onReanalyze: () => void }
 
-export function ShareBar({ reportId, onReanalyze }: Props) {
+export function ShareBar({ reportId, grade, score, onReanalyze }: Props) {
   const [copied, setCopied] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
   const shareUrl = `${window.location.origin}/report/${reportId}`
@@ -23,7 +23,14 @@ export function ShareBar({ reportId, onReanalyze }: Props) {
         <button onClick={() => setShowEmbed(true)} className="px-3 py-2 rounded-md font-medium text-sm border border-border text-text">Embed badge</button>
         <button onClick={onReanalyze} className="px-3 py-2 rounded-md font-medium text-sm border border-border text-text-muted">Re-analyze</button>
       </div>
-      {showEmbed && <EmbedBadgeModal reportId={reportId} onClose={() => setShowEmbed(false)} />}
+      {showEmbed && (
+        <EmbedBadgeModal
+          reportId={reportId}
+          grade={grade}
+          score={score}
+          onClose={() => setShowEmbed(false)}
+        />
+      )}
     </>
   )
 }

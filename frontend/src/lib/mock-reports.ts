@@ -81,6 +81,8 @@ export const mockReports: Record<string, ReportResult> = {
         ],
       },
     ],
+    verdict:
+      "A textbook repository — every dimension lands in the A band, with only forward-looking housekeeping left.",
     synthesis:
       "facebook/react is the kind of repository you point junior engineers at when you want them to see what 'maintained' actually means. Every dimension lands in the A band, and the few low-severity findings are housekeeping rather than risk. There is no single weak link here — process, tooling, and code quality move together.\n\nThe two strongest signals are the CI/CD pipeline (10/10: full matrix workflows, Dockerfile, pre-commit) and the test surface (9.3/10) which combines snapshot, unit, and integration tiers. Together they mean almost any regression is caught before review. Documentation at 9.1 reinforces this — the README, architecture docs, and contributor guide are coherent, current, and load-bearing for the community around the project.\n\nThe only meaningful priorities are forward-looking. First, add a SECURITY.md so the disclosure policy is discoverable instead of tribal — the existing workflow is already mature, this is just publishing it. Second, keep Dependabot tight on the dev-tooling tail; one minor-version drift today becomes a stale-dep cluster in six months. Neither is urgent. The bar to maintain is higher than the bar to reach.",
     top_fixes: [
@@ -241,6 +243,8 @@ export const mockReports: Record<string, ReportResult> = {
         ],
       },
     ],
+    verdict:
+      "Strong code and CI, dragged to a B by a thin test surface and aging dependencies.",
     synthesis:
       "vercel/next.js is a strong repository carrying a few specific weights. The headline score of 7.2 hides a real split: code quality, CI/CD, and the public documentation experience are all genuinely good, while dependency hygiene and unit-level testing are dragging the rest of the report down. This is the classic shape of a fast-moving project where the runtime is loved and the build infrastructure quietly accumulates debt.\n\nThe clearest strengths are CI/CD (9.0/10) and code quality (8.4/10). The matrix workflows, Dockerfile, and pre-commit hooks form a credible release pipeline, and module boundaries are mostly respected outside one well-known complexity hotspot in webpack-config.ts. Documentation at 7.1 is held up by the excellent public docs site; the in-repo contributor surface is what drags it from an A to a B.\n\nTwo priorities matter more than the rest. First, the dependency cluster scoring 4.2 includes a transitive with a published CVE and 12 packages more than two majors behind — start with the three upgrades that resolve the advisory, then batch the long tail. Second, internal-package test coverage at 3.1 is structurally broken: three packages have no test config of their own and silently skip files. Wire per-package configs and a 60% threshold on the compiler package into CI before adding any more features.",
     top_fixes: [
@@ -429,6 +433,8 @@ export const mockReports: Record<string, ReportResult> = {
         ],
       },
     ],
+    verdict:
+      "Fine code that was never treated like a real project — docs, tests, and deps have all drifted.",
     synthesis:
       "octocat/hello-world is a working project that has not yet been treated like a real one. The 5.2 overall is what you get when the code itself is fine but everything around it — docs, tests, dependencies — has been left to drift. None of the problems are catastrophic individually; collectively they make the repo expensive to onboard onto and risky to depend on.\n\nThe relative strengths are CI/CD at 7.2 and code quality at 6.0. There is already a working GitHub Actions pipeline, which means most fixes can be enforced rather than just suggested. Code is readable, with the caveat that one handler file and one utils file are absorbing complexity that should be split. These are the parts to keep building on.\n\nTwo priorities outweigh the rest. First, the documentation score of 3.4 includes a missing LICENSE — that is a one-line fix that meaningfully de-risks the project for anyone considering it. Pair it with explicit Install and Usage sections in the README. Second, the testing score of 2.0 is structural: there is no committed test runner config and the two existing tests are effectively demo scripts. Pick vitest, write tests for the two highest-traffic handlers, and gate them in CI before adding new features.",
     top_fixes: [
@@ -656,6 +662,8 @@ export const mockReports: Record<string, ReportResult> = {
         ],
       },
     ],
+    verdict:
+      "Working demo code with every supporting practice missing — no tests, no CI, no docs, and a hardcoded secret.",
     synthesis:
       "intern/hackathon-2019 reads exactly like what the name suggests: a project that worked for a demo and then accumulated five years of neglect. The 2.8 overall is not the result of a single broken area — it is the result of every supporting practice being absent at once. No README, no tests, no CI, no dependency hygiene, and one hardcoded secret. The code itself is not catastrophic, but it has been left without any of the scaffolding that keeps a project usable.\n\nThe least-bad areas are security at 5.6 and CI/CD at 4.0, and both are graded generously. Security stays out of the F band only because there is exactly one hardcoded secret rather than a pattern of them, and CI/CD scrapes a D because basic deployment scripts exist even though no automated workflow runs them. There are no real strengths to build on — every dimension needs work.\n\nTwo priorities outrank the rest by a wide margin. First, the dependency situation includes a known-exploitable CVE that has had a fix available for over a year, and there is a hardcoded API key sitting in settings.py — both are active risks, both should be addressed this week. Second, the project needs the bare minimum of a README, a LICENSE, and a CI workflow before any new features are added; without those, nothing else done to the repo will hold.",
     top_fixes: [
