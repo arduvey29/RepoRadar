@@ -1,11 +1,17 @@
 import { mockReports } from "./lib/mock-reports"
-import { DimensionGrid } from "./components/DimensionGrid"
+import { Hero } from "./components/Hero"
 
 export default function App() {
-  const r = mockReports["mock-a"]
   return (
-    <div data-grade={r.overall_grade} className="p-8 max-w-2xl mx-auto">
-      <DimensionGrid dimensions={r.dimensions} />
+    <div className="max-w-3xl mx-auto p-8 space-y-6">
+      {["mock-a", "mock-b", "mock-c", "mock-f"].map((k) => {
+        const r = mockReports[k]
+        return (
+          <div key={k} data-grade={r.overall_grade}>
+            <Hero report={r} />
+          </div>
+        )
+      })}
     </div>
   )
 }
