@@ -1,10 +1,12 @@
-import { BrowserRouter } from "react-router-dom"
-import { Landing } from "./pages/Landing"
+import { MemoryRouter, Routes, Route } from "react-router-dom"
+import { Report } from "./pages/Report"
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Landing />
-    </BrowserRouter>
+    <MemoryRouter initialEntries={["/report/mock-c"]}>
+      <Routes>
+        <Route path="/report/:id" element={<Report />} />
+      </Routes>
+    </MemoryRouter>
   )
 }
