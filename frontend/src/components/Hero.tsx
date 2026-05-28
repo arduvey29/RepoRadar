@@ -8,32 +8,47 @@ interface Props {
   highlightKey?: string | null
   onHoverDimension?: (key: string | null) => void
   onSelectDimension?: (key: string) => void
+  /** Stack radar above metadata (for the sticky sidebar column). */
+  vertical?: boolean
 }
 
-export function Hero({ report, highlightKey, onHoverDimension, onSelectDimension }: Props) {
+export function Hero({
+  report,
+  highlightKey,
+  onHoverDimension,
+  onSelectDimension,
+  vertical = false,
+}: Props) {
   const score = useCountUp(report.overall_score)
   return (
     <header
-      className="flex flex-col sm:flex-row items-center gap-6 p-7 rounded-lg border border-border"
+      className={
+        "flex gap-6 p-7 rounded-lg border border-border " +
+        (vertical ? "flex-col items-center text-center" : "flex-col sm:flex-row items-center")
+      }
       style={{ background: "linear-gradient(180deg, var(--accent-tint) 0%, var(--bg) 60%)" }}
     >
       <RadarChart
         dimensions={report.dimensions}
-        size={300}
+        size={vertical ? 280 : 300}
         animateIn
-        sweep
         highlightKey={highlightKey}
         onHoverDimension={onHoverDimension}
         onSelectDimension={onSelectDimension}
       />
-      <div className="text-center sm:text-left">
+      <div className={vertical ? "" : "text-center sm:text-left"}>
         <div className="text-text-muted text-sm">Repository health</div>
         <h1 className="text-2xl font-semibold tracking-tight mt-0.5">{report.repo_name}</h1>
         <div className="mt-1 text-4xl font-bold tracking-tight" style={{ color: "var(--accent)" }}>
           {score.toFixed(1)}
           <span className="text-text-dim text-lg font-normal"> / 10 · {report.overall_grade}</span>
         </div>
-        <div className="mt-3 flex gap-1.5 flex-wrap justify-center sm:justify-start">
+        <div
+          className={
+            "mt-3 flex gap-1.5 flex-wrap " +
+            (vertical ? "justify-center" : "justify-center sm:justify-start")
+          }
+        >
           <Chip>Grade {report.overall_grade}</Chip>
           <Chip>6 dimensions</Chip>
           <Chip>Public</Chip>
