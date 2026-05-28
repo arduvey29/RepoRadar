@@ -1,9 +1,10 @@
-import { ShareBar } from "./components/ShareBar"
+import { BrowserRouter } from "react-router-dom"
+import { Landing } from "./pages/Landing"
 
 export default function App() {
   return (
-    <div data-grade="B" className="max-w-3xl mx-auto p-8">
-      <ShareBar reportId="mock-b" onReanalyze={() => alert("re-analyze clicked")} />
-    </div>
+    <BrowserRouter>
+      <Landing />
+    </BrowserRouter>
   )
 }
