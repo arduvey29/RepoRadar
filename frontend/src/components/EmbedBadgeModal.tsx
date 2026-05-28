@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { BadgePreview } from "./BadgePreview"
+import { Button } from "./Button"
 
 const apiBase = import.meta.env.VITE_API_URL || ""
 
@@ -28,10 +29,12 @@ export function EmbedBadgeModal({ reportId, grade, score, onClose }: Props) {
         <div className="mb-3"><BadgePreview grade={grade} score={score} /></div>
         <pre className="bg-bg-elev-2 p-3 rounded-sm text-xs font-mono overflow-x-auto">{md}</pre>
         <div className="mt-3 flex gap-2 justify-end">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm text-text-muted">Close</button>
-          <button onClick={copy} className="px-3 py-1.5 text-sm rounded-md" style={{ background: "var(--accent)", color: "var(--bg)" }}>
+          <Button tone="ghost" onClick={onClose}>
+            Close
+          </Button>
+          <Button tone="primary" onClick={copy}>
             {copied ? "Copied!" : "Copy Markdown"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

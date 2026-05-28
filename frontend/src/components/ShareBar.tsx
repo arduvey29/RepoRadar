@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { EmbedBadgeModal } from "./EmbedBadgeModal"
+import { Button } from "./Button"
 
 interface Props { reportId: string; grade: string; score: number; onReanalyze: () => void }
 
@@ -17,11 +18,15 @@ export function ShareBar({ reportId, grade, score, onReanalyze }: Props) {
   return (
     <>
       <div className="flex gap-2 flex-wrap">
-        <button onClick={copyLink} className="px-3 py-2 rounded-md font-medium text-sm" style={{ background: "var(--accent)", color: "var(--bg)" }}>
+        <Button tone="primary" onClick={copyLink}>
           {copied ? "Copied!" : "Copy share link"}
-        </button>
-        <button onClick={() => setShowEmbed(true)} className="px-3 py-2 rounded-md font-medium text-sm border border-border text-text">Embed badge</button>
-        <button onClick={onReanalyze} className="px-3 py-2 rounded-md font-medium text-sm border border-border text-text-muted">Re-analyze</button>
+        </Button>
+        <Button tone="ghost" onClick={() => setShowEmbed(true)}>
+          Embed badge
+        </Button>
+        <Button tone="ghost" onClick={onReanalyze}>
+          Re-analyze
+        </Button>
       </div>
       {showEmbed && (
         <EmbedBadgeModal

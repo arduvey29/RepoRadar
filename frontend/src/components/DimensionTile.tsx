@@ -12,7 +12,7 @@ export function DimensionTile({ dim, onClick }: Props) {
   return (
     <button
       onClick={onClick}
-      className="bg-bg-elev-2 border border-border rounded-md px-3 py-2 flex justify-between items-baseline transition-colors hover:border-[var(--border-hover)] text-left w-full"
+      className="bg-bg-elev-2 border border-border rounded-md px-3 py-2 flex justify-between items-baseline card-hover text-left w-full"
     >
       <span className="text-text-muted text-sm">{dim.name}</span>
       <span className="font-semibold" style={{ color: COLOR[state] }}>
