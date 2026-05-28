@@ -1,6 +1,7 @@
-import { useParams, useNavigate } from "react-router-dom"
+import { Link, useParams, useNavigate } from "react-router-dom"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { mockReports } from "../lib/mock-reports"
+import { getReport } from "../lib/api"
 import type { ReportResult } from "../lib/types"
 import { Hero } from "../components/Hero"
 import { ShareBar } from "../components/ShareBar"
@@ -45,13 +46,42 @@ export function Report() {
   const [report, setReport] = useState<ReportResult | null>(() =>
     id && mockReports[id] ? mockReports[id] : null
   )
+  const [status, setStatus] = useState<"loading" | "ready" | "notfound">(() =>
+    id && mockReports[id] ? "ready" : "loading"
+  )
   const [highlightKey, setHighlightKey] = useState<string | null>(null)
   const revealed = useRevealOnScroll()
   const heroRef = useRef<HTMLDivElement>(null)
   const [introTransform, setIntroTransform] = useState<string | null>(null)
 
   useEffect(() => {
-    if (id && mockReports[id]) setReport(mockReports[id])
+    if (!id) {
+      setStatus("notfound")
+      return
+    }
+    if (mockReports[id]) {
+      setReport(mockReports[id])
+      setStatus("ready")
+      return
+    }
+    let cancelled = false
+    setStatus("loading")
+    getReport(id)
+      .then((res) => {
+        if (cancelled) return
+        if (res.report) {
+          setReport(res.report)
+          setStatus("ready")
+        } else {
+          setStatus("notfound")
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("notfound")
+      })
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   // Before paint, place the hero at viewport center while not yet revealed.
@@ -73,7 +103,27 @@ export function Report() {
     return () => window.removeEventListener("resize", compute)
   }, [revealed, report])
 
-  if (!report) return <main className="p-8 text-text-muted">Report not found.</main>
+  if (status === "loading" && !report) {
+    return (
+      <main className="min-h-screen grid place-items-center p-8 text-text-muted">
+        Loading report…
+      </main>
+    )
+  }
+
+  if (!report) {
+    return (
+      <main className="min-h-screen grid place-items-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold">Report not found</h2>
+          <p className="text-text-muted mt-2">The link may have expired or the ID is wrong.</p>
+          <Link to="/" className="link inline-block mt-4">
+            Audit a new repo
+          </Link>
+        </div>
+      </main>
+    )
+  }
 
   function scrollToDim(key: string) {
     document.getElementById(`dim-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
