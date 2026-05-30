@@ -1,9 +1,12 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-import httpx, os, uuid, asyncio
+import httpx, os, uuid, asyncio, traceback
 from datetime import datetime, timezone
-from models import AnalyzeRequest, AnalyzeResponse, ReportResult, DimensionResult
+from models import AnalyzeRequest, AnalyzeResponse, ReportResult
 from report_store import store
+from analyzer.repo_cloner import clone_repo
+from analyzer.dimensions import code_quality, docs, deps, tests as tests_mod, ci, security
+import shutil
 
 app = FastAPI(title="RepoRadar API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -23,28 +26,39 @@ async def healthz():
     return {"status": "ok", "ollama_available": await ollama_available()}
 
 
-def _build_mock_report(report_id: str, repo_url: str) -> ReportResult:
-    return ReportResult(
-        report_id=report_id, repo_url=repo_url, repo_name="vercel/next.js",
-        overall_score=7.2, overall_grade="B",
-        dimensions=[
-            DimensionResult(key="code_quality", name="Code Quality", score=8.4, grade="B", summary="OK"),
-            DimensionResult(key="docs", name="Docs", score=7.1, grade="B", summary="OK"),
-            DimensionResult(key="deps", name="Dependencies", score=4.2, grade="C", summary="Stale"),
-            DimensionResult(key="tests", name="Tests", score=3.1, grade="D", summary="Thin"),
-            DimensionResult(key="ci", name="CI/CD", score=9.0, grade="A", summary="Strong"),
-            DimensionResult(key="security", name="Security", score=6.6, grade="B", summary="OK"),
-        ],
-        verdict="Strong CI and code, dragged down by a thin test surface and aging dependencies.",
-        synthesis="Mock synthesis.\n\nStrengths: CI.\n\nFix: tests.",
-        top_fixes=["Add tests", "Refresh deps"],
-        generated_at=datetime.now(timezone.utc).isoformat(),
-        shareable_url=f"/report/{report_id}",
-    )
+def _overall_grade(score: float) -> str:
+    return "A" if score >= 8.5 else "B" if score >= 6.5 else "C" if score >= 4.5 else "D" if score >= 3.0 else "F"
 
-async def _run_mock_analysis(report_id: str, repo_url: str):
-    await asyncio.sleep(3)
-    store.set_report(report_id, _build_mock_report(report_id, repo_url))
+async def run_analysis(report_id: str, repo_url: str):
+    repo_path = None
+    try:
+        repo_path, repo_name = await clone_repo(repo_url)
+        dims = await asyncio.gather(
+            code_quality.analyze(repo_path),
+            docs.analyze(repo_path),
+            deps.analyze(repo_path),
+            tests_mod.analyze(repo_path),
+            ci.analyze(repo_path),
+            security.analyze(repo_path),
+        )
+        overall = sum(d.score for d in dims) / len(dims)
+        report = ReportResult(
+            report_id=report_id, repo_url=repo_url, repo_name=repo_name,
+            overall_score=round(overall, 1), overall_grade=_overall_grade(overall),
+            dimensions=list(dims),
+            verdict="(verdict pending)",
+            synthesis="(synthesis pending)",
+            top_fixes=[],
+            generated_at=datetime.now(timezone.utc).isoformat(),
+            shareable_url=f"/report/{report_id}",
+        )
+        store.set_report(report_id, report)
+    except Exception as e:
+        traceback.print_exc()
+        store.set_error(report_id, f"{type(e).__name__}: {e}" or "Unknown error")
+    finally:
+        if repo_path:
+            shutil.rmtree(repo_path, ignore_errors=True)
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze(req: AnalyzeRequest, bg: BackgroundTasks):
@@ -58,7 +72,7 @@ async def analyze(req: AnalyzeRequest, bg: BackgroundTasks):
     report_id = str(uuid.uuid4())
     store.set_status(report_id, "processing")
     store.cache_url(req.repo_url, report_id)
-    bg.add_task(_run_mock_analysis, report_id, req.repo_url)
+    bg.add_task(run_analysis, report_id, req.repo_url)
     return AnalyzeResponse(report_id=report_id, status="processing")
 
 @app.get("/report/{report_id}", response_model=AnalyzeResponse)
