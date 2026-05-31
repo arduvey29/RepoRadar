@@ -1,0 +1,202 @@
+[
+  {
+    "category": "no_readme",
+    "dimension": "docs",
+    "severity": "high",
+    "recommendation": "Add a README.md at the repo root with a one-line description, a quickstart that runs in under 60 seconds, and a screenshot or example output. This is the first thing every visitor sees.",
+    "prose_fragment": "ships without a README, so a new visitor can't tell what the project is or how to try it",
+    "example_repo": "facebook/react"
+  },
+  {
+    "category": "short_readme",
+    "dimension": "docs",
+    "severity": "medium",
+    "recommendation": "Expand the README to at least 80 lines covering what the project does, why it exists, how to install it, and a minimal working example. Aim for a reader to be productive in under five minutes.",
+    "prose_fragment": "has a stub README that stops short of explaining what the project does or how to run it",
+    "example_repo": "tiangolo/fastapi"
+  },
+  {
+    "category": "missing_install_section",
+    "dimension": "docs",
+    "severity": "high",
+    "recommendation": "Add an `## Installation` section to the README with the exact commands a fresh machine needs (`pip install ...`, `npm install`, or `docker run ...`). Include the supported Python/Node version.",
+    "prose_fragment": "skips an install section, leaving readers to guess the right package manager and version",
+    "example_repo": "psf/requests"
+  },
+  {
+    "category": "missing_usage_section",
+    "dimension": "docs",
+    "severity": "high",
+    "recommendation": "Add a `## Usage` or `## Quickstart` section with a copy-pasteable code block that produces visible output. A reader should be able to run the example without reading the source.",
+    "prose_fragment": "has no usage example, so the only way to learn the API is to read the source",
+    "example_repo": "huggingface/transformers"
+  },
+  {
+    "category": "missing_architecture_section",
+    "dimension": "docs",
+    "severity": "low",
+    "recommendation": "Add an `## Architecture` or `docs/architecture.md` explaining the major components, the request/data flow, and the key design choices in a paragraph or two. A simple ASCII diagram goes a long way.",
+    "prose_fragment": "doesn't document its architecture, so contributors have to reverse-engineer the data flow",
+    "example_repo": "kubernetes/kubernetes"
+  },
+  {
+    "category": "missing_contributing_section",
+    "dimension": "docs",
+    "severity": "low",
+    "recommendation": "Add a `CONTRIBUTING.md` (or section in the README) covering how to set up a dev environment, run the tests, and what your PR review expectations are. Even three short paragraphs is enough.",
+    "prose_fragment": "lacks contributor guidance, so first-time contributors don't know how to set up or submit a PR",
+    "example_repo": "rust-lang/rust"
+  },
+  {
+    "category": "no_license",
+    "dimension": "docs",
+    "severity": "high",
+    "recommendation": "Add a `LICENSE` file at the repo root. If you want broad adoption, MIT or Apache-2.0 are the safe defaults; without a license, the code is legally unusable by anyone else.",
+    "prose_fragment": "has no LICENSE file, which means nobody else is legally permitted to use, fork, or redistribute the code",
+    "example_repo": "torvalds/linux"
+  },
+  {
+    "category": "high_complexity_file",
+    "dimension": "code_quality",
+    "severity": "medium",
+    "recommendation": "Identify the top one or two functions in the flagged file and extract their inner branches into named helpers. Aim for cyclomatic complexity under 10 per function so each unit fits in your head.",
+    "prose_fragment": "has at least one file with deeply nested logic that's hard to follow without a debugger",
+    "example_repo": "django/django"
+  },
+  {
+    "category": "oversized_file",
+    "dimension": "code_quality",
+    "severity": "medium",
+    "recommendation": "Split files longer than ~500 lines along natural seams (one class per file, route handlers vs. helpers, etc.). Long files hide coupling and make code review painful.",
+    "prose_fragment": "concentrates too much logic in a single oversized file, which makes review and navigation slow",
+    "example_repo": "pallets/flask"
+  },
+  {
+    "category": "stale_dep",
+    "dimension": "deps",
+    "severity": "medium",
+    "recommendation": "Bump dependencies that are more than two minor versions behind the latest release. Run `pip list --outdated` (or `npm outdated`) and upgrade in a dedicated PR with the test suite green.",
+    "prose_fragment": "pins dependencies that are several minor versions behind, leaving known bug fixes on the table",
+    "example_repo": "pandas-dev/pandas"
+  },
+  {
+    "category": "cve_dep",
+    "dimension": "deps",
+    "severity": "high",
+    "recommendation": "Upgrade the flagged dependency past the CVE-fixed version today. Pair the bump with `pip-audit` (or `npm audit`) in CI so the next vulnerability is caught the day it's published.",
+    "prose_fragment": "depends on packages with published CVEs that are trivially exploitable in a typical deployment",
+    "example_repo": "openssl/openssl"
+  },
+  {
+    "category": "unpinned_versions",
+    "dimension": "deps",
+    "severity": "medium",
+    "recommendation": "Pin every direct dependency to an exact version (`requests==2.32.3`, not `requests>=2`) and commit a lockfile (`requirements.txt`, `poetry.lock`, or `package-lock.json`). Reproducible builds prevent 'works on my machine'.",
+    "prose_fragment": "leaves dependency versions unpinned, so two developers can end up with different package versions on the same commit",
+    "example_repo": "pypa/pipenv"
+  },
+  {
+    "category": "low_test_ratio",
+    "dimension": "tests",
+    "severity": "medium",
+    "recommendation": "Raise the test-to-source ratio toward 1:1 by adding tests for the most-edited modules first. Start with the files that show up most often in `git log --stat`.",
+    "prose_fragment": "has noticeably more application code than test code, so refactors carry real regression risk",
+    "example_repo": "pytest-dev/pytest"
+  },
+  {
+    "category": "no_test_config",
+    "dimension": "tests",
+    "severity": "high",
+    "recommendation": "Add a `pytest.ini`, `pyproject.toml [tool.pytest]`, or equivalent runner config (Jest, Vitest, Go test tags). New contributors should be able to run the whole suite with a single command.",
+    "prose_fragment": "has no test runner configured, so there's no single command that exercises the suite",
+    "example_repo": "psf/black"
+  },
+  {
+    "category": "no_github_workflows",
+    "dimension": "ci",
+    "severity": "high",
+    "recommendation": "Add `.github/workflows/ci.yml` that runs lint and the test suite on every push and PR against the main branch. Without CI, regressions land in main and stay there.",
+    "prose_fragment": "doesn't run CI on pull requests, so regressions can land in the main branch unnoticed",
+    "example_repo": "actions/checkout"
+  },
+  {
+    "category": "no_dockerfile",
+    "dimension": "ci",
+    "severity": "low",
+    "recommendation": "Add a `Dockerfile` that builds and runs the app in one command. Even a 15-line image lets reviewers and CI reproduce your environment exactly.",
+    "prose_fragment": "has no Dockerfile, so reproducing the runtime environment depends on the host machine",
+    "example_repo": "docker/getting-started"
+  },
+  {
+    "category": "no_docker_compose",
+    "dimension": "ci",
+    "severity": "low",
+    "recommendation": "Add a `docker-compose.yml` that brings up the app and its services (database, cache, queue) with one `docker compose up`. This collapses local-setup friction to zero.",
+    "prose_fragment": "lacks a compose file, so spinning up the full stack locally is a manual, multi-step process",
+    "example_repo": "docker/awesome-compose"
+  },
+  {
+    "category": "no_env_example",
+    "dimension": "ci",
+    "severity": "medium",
+    "recommendation": "Add a `.env.example` (committed) listing every environment variable the app reads, with safe placeholder values. New contributors should never have to grep the source to find required config.",
+    "prose_fragment": "ships no `.env.example`, so contributors have to grep the source to discover required configuration",
+    "example_repo": "vercel/next.js"
+  },
+  {
+    "category": "no_makefile",
+    "dimension": "ci",
+    "severity": "low",
+    "recommendation": "Add a `Makefile` (or `justfile`, or `scripts/` entries in `package.json`) with `make install`, `make test`, and `make lint` targets. One-command workflows lower the barrier for drive-by contributors.",
+    "prose_fragment": "has no Makefile or task runner, so common workflows have to be remembered or re-derived each time",
+    "example_repo": "kubernetes/minikube"
+  },
+  {
+    "category": "no_precommit",
+    "dimension": "ci",
+    "severity": "low",
+    "recommendation": "Add a `.pre-commit-config.yaml` with formatter (black, prettier) and linter (ruff, eslint) hooks. Catching style issues locally keeps CI focused on real failures.",
+    "prose_fragment": "doesn't run pre-commit hooks, so style and lint nits clog up PR review threads",
+    "example_repo": "pre-commit/pre-commit"
+  },
+  {
+    "category": "bandit_critical",
+    "dimension": "security",
+    "severity": "high",
+    "recommendation": "Fix every Bandit HIGH-severity finding before the next release: typically these are insecure deserialization, shell injection, or weak crypto. Treat them as P0 bugs, not lint noise.",
+    "prose_fragment": "trips Bandit's high-severity rules, which typically flag shell injection or unsafe deserialization",
+    "example_repo": "PyCQA/bandit"
+  },
+  {
+    "category": "bandit_medium",
+    "dimension": "security",
+    "severity": "medium",
+    "recommendation": "Triage the Bandit MEDIUM findings: most are easy fixes (replace `assert` in production code with explicit checks, swap `random` for `secrets` in security paths, drop `shell=True`).",
+    "prose_fragment": "has medium-severity Bandit findings that are usually one-line fixes once you look at them",
+    "example_repo": "PyCQA/bandit"
+  },
+  {
+    "category": "hardcoded_secret",
+    "dimension": "security",
+    "severity": "high",
+    "recommendation": "Move the hardcoded credential out of source today, rotate it, and read it from an environment variable or secret store instead. Add `detect-secrets` or `gitleaks` to CI so the next one never lands.",
+    "prose_fragment": "contains hardcoded credentials in source, which means the secret is already compromised the moment the repo is public",
+    "example_repo": "Yelp/detect-secrets"
+  },
+  {
+    "category": "eval_usage",
+    "dimension": "security",
+    "severity": "high",
+    "recommendation": "Replace `eval` / `exec` on user-influenced input with an explicit parser (`ast.literal_eval`, `json.loads`, or a real grammar). `eval` on untrusted input is remote code execution.",
+    "prose_fragment": "calls `eval` on data that can reach user input, which is a direct path to remote code execution",
+    "example_repo": "python/cpython"
+  },
+  {
+    "category": "innerhtml_assign",
+    "dimension": "security",
+    "severity": "high",
+    "recommendation": "Replace `element.innerHTML = userValue` with `textContent` (or a sanitizer like DOMPurify when HTML is actually required). Direct `innerHTML` assignment is the classic XSS sink.",
+    "prose_fragment": "assigns user-controlled strings to `innerHTML`, which is the textbook XSS vulnerability",
+    "example_repo": "cure53/DOMPurify"
+  }
+]
