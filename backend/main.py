@@ -6,12 +6,23 @@ from models import AnalyzeRequest, AnalyzeResponse, ReportResult
 from report_store import store
 from analyzer.repo_cloner import clone_repo
 from analyzer.dimensions import code_quality, docs, deps, tests as tests_mod, ci, security
+from analyzer.synthesizer.chain import synthesize_with_chain
+from analyzer.synthesizer.providers import GroqProvider, GeminiProvider, OllamaProvider
 import shutil
 
 app = FastAPI(title="RepoRadar API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+PROVIDERS = [GroqProvider(), GeminiProvider(), OllamaProvider()]
+
+
+@app.on_event("startup")
+async def warmup_ollama():
+    ollama = next((p for p in PROVIDERS if isinstance(p, OllamaProvider)), None)
+    if ollama and await ollama.available():
+        # Fire-and-forget so the first user request isn't cold.
+        asyncio.create_task(ollama.complete("ping"))
 
 async def ollama_available() -> bool:
     try:
@@ -41,14 +52,15 @@ async def run_analysis(report_id: str, repo_url: str):
             ci.analyze(repo_path),
             security.analyze(repo_path),
         )
+        synth = await synthesize_with_chain(repo_name, list(dims), PROVIDERS)
         overall = sum(d.score for d in dims) / len(dims)
         report = ReportResult(
             report_id=report_id, repo_url=repo_url, repo_name=repo_name,
             overall_score=round(overall, 1), overall_grade=_overall_grade(overall),
             dimensions=list(dims),
-            verdict="(verdict pending)",
-            synthesis="(synthesis pending)",
-            top_fixes=[],
+            verdict=synth.verdict,
+            synthesis=synth.text,
+            top_fixes=synth.top_fixes,
             generated_at=datetime.now(timezone.utc).isoformat(),
             shareable_url=f"/report/{report_id}",
         )
