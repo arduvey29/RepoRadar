@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import httpx, os, uuid, asyncio, traceback
 from datetime import datetime, timezone
 from models import AnalyzeRequest, AnalyzeResponse, ReportResult
@@ -8,6 +9,7 @@ from analyzer.repo_cloner import clone_repo
 from analyzer.dimensions import code_quality, docs, deps, tests as tests_mod, ci, security
 from analyzer.synthesizer.chain import synthesize_with_chain
 from analyzer.synthesizer.providers import GroqProvider, GeminiProvider, OllamaProvider
+from share.og_image import render as render_og
 import shutil
 
 app = FastAPI(title="RepoRadar API")
@@ -94,3 +96,17 @@ async def get_report(report_id: str):
         raise HTTPException(404, "Report not found")
     return AnalyzeResponse(report_id=report_id, status=entry["status"],
                            report=entry.get("report"), error=entry.get("error"))
+
+
+_OG_CACHE: dict[str, bytes] = {}
+
+
+@app.get("/og/{report_id}.png")
+async def og_image(report_id: str):
+    entry = store.get(report_id)
+    if not entry or not entry.get("report"):
+        raise HTTPException(404, "Report not found")
+    if report_id not in _OG_CACHE:
+        _OG_CACHE[report_id] = render_og(entry["report"])
+    return Response(content=_OG_CACHE[report_id], media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
