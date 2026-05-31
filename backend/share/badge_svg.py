@@ -25,10 +25,10 @@ def render_badge(report: ReportResult) -> str:
         f'<rect width="{total}" height="20" rx="3" fill="#333"/>'
         f'<rect x="{left_w}" width="{right_w}" height="20" rx="3" fill="{fill}"/>'
         f'<rect width="{total}" height="20" rx="3" fill="url(#s)"/>'
-        '<g fill="#fff" text-anchor="middle" '
+        '<g text-anchor="middle" '
         'font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="11">'
-        f'<text x="{left_w / 2}" y="14">RepoRadar</text>'
-        f'<text x="{left_w + right_w / 2}" y="14">{right_label}</text>'
+        f'<text x="{left_w / 2}" y="14" fill="#fff">RepoRadar</text>'
+        f'<text x="{left_w + right_w / 2}" y="14" fill="#0a0a0b">{right_label}</text>'
         '</g>'
         '</svg>'
     )

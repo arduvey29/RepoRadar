@@ -30,5 +30,6 @@ VERDICT: <one sentence, max 25 words, naming strongest and weakest dimensions>
 TOP_FIXES:
 - <first concrete fix, imperative>
 - <second concrete fix, imperative>
+- <third concrete fix, imperative>
 
 Direct. No preamble. No "In conclusion." Sound like a senior engineer doing code review, not a marketing report."""

@@ -31,7 +31,9 @@ def _parse_llm_output(raw: str) -> tuple[str, str, list[str]] | None:
             if fix:
                 fixes.append(fix)
 
-    body = raw[:v_match.start()] + raw[v_match.end():f_match.start()]
+    # Drop any preamble (text before VERDICT:) — small models sometimes write
+    # "Here's my review:" or similar before complying with the schema.
+    body = raw[v_match.end():f_match.start()]
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
 
     if not verdict or not body or not fixes:

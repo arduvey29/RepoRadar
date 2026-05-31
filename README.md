@@ -2,11 +2,9 @@
 
 AI-powered GitHub repository health analyzer. Paste a URL, get a scored report across 6 dimensions with LLM-synthesized recommendations.
 
-Status: in development.
-
 ## Local development
 
-**Backend** (Python 3.11, FastAPI):
+**Backend** (Python 3.13, FastAPI):
 
 ```powershell
 cd backend

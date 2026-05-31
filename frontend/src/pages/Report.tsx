@@ -92,33 +92,41 @@ export function Report() {
     const title = `${report.repo_name} — ${report.overall_grade} ${report.overall_score.toFixed(1)} · RepoRadar`
     const description = report.verdict || "Repository health report from RepoRadar."
 
+    const createdTags: HTMLMetaElement[] = []
+    const restorers: Array<() => void> = []
     const upsertMeta = (attr: "name" | "property", key: string, content: string) => {
-      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
-      if (!el) {
-        el = document.createElement("meta")
+      const existing = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
+      if (existing) {
+        const original = existing.getAttribute("content")
+        existing.setAttribute("content", content)
+        restorers.push(() => {
+          if (original === null) existing.removeAttribute("content")
+          else existing.setAttribute("content", original)
+        })
+      } else {
+        const el = document.createElement("meta")
         el.setAttribute(attr, key)
+        el.setAttribute("content", content)
         document.head.appendChild(el)
+        createdTags.push(el)
       }
-      el.setAttribute("content", content)
-      return el
     }
 
-    const original = document.title
+    const originalTitle = document.title
     document.title = title
-    const tags = [
-      upsertMeta("property", "og:title", title),
-      upsertMeta("property", "og:description", description),
-      upsertMeta("property", "og:image", ogUrl),
-      upsertMeta("property", "og:url", shareUrl),
-      upsertMeta("property", "og:type", "website"),
-      upsertMeta("name", "twitter:card", "summary_large_image"),
-      upsertMeta("name", "twitter:title", title),
-      upsertMeta("name", "twitter:description", description),
-      upsertMeta("name", "twitter:image", ogUrl),
-    ]
+    upsertMeta("property", "og:title", title)
+    upsertMeta("property", "og:description", description)
+    upsertMeta("property", "og:image", ogUrl)
+    upsertMeta("property", "og:url", shareUrl)
+    upsertMeta("property", "og:type", "website")
+    upsertMeta("name", "twitter:card", "summary_large_image")
+    upsertMeta("name", "twitter:title", title)
+    upsertMeta("name", "twitter:description", description)
+    upsertMeta("name", "twitter:image", ogUrl)
     return () => {
-      document.title = original
-      tags.forEach((t) => t.remove())
+      document.title = originalTitle
+      createdTags.forEach((t) => t.remove())
+      restorers.forEach((r) => r())
     }
   }, [report])
 

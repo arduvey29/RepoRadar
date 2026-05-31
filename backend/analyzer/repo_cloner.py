@@ -1,8 +1,11 @@
-import asyncio, tempfile, shutil, subprocess
+import asyncio, tempfile, shutil, subprocess, re
+
+_GH_URL_RE = re.compile(r"^https://github\.com/[\w.-]+/[\w.-]+(\.git)?/?$")
+
 
 async def clone_repo(repo_url: str) -> tuple[str, str]:
-    if not repo_url.startswith("https://github.com/"):
-        raise ValueError("Only public GitHub URLs are supported")
+    if not _GH_URL_RE.match(repo_url):
+        raise ValueError("Only public GitHub URLs are supported (https://github.com/owner/repo).")
     parts = repo_url.rstrip("/").removesuffix(".git").split("/")
     repo_name = "/".join(parts[-2:])
     tmp_dir = tempfile.mkdtemp(prefix="reporadar_")

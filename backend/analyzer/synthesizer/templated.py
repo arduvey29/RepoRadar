@@ -44,10 +44,10 @@ def synthesize(repo_name: str, dimensions: list[DimensionResult], examples: list
     else:
         p2 = "No dimension scores in the strong range, so improvements compound — every fix helps."
 
-    high_findings = [f for d in dimensions for f in d.findings if f.severity == "high"][:2]
+    high_findings = [f for d in dimensions for f in d.findings if f.severity == "high"][:3]
     by_cat = {e["category"]: e for e in examples}
     fragments = []
-    for f in high_findings:
+    for f in high_findings[:2]:
         e = by_cat.get(f.category)
         if e and "prose_fragment" in e:
             fragments.append(e["prose_fragment"])
@@ -58,6 +58,6 @@ def synthesize(repo_name: str, dimensions: list[DimensionResult], examples: list
 
     top_fixes = [by_cat[f.category]["recommendation"]
                  for f in high_findings
-                 if f.category in by_cat and "recommendation" in by_cat[f.category]][:2]
+                 if f.category in by_cat and "recommendation" in by_cat[f.category]][:3]
 
     return SynthesisResult(verdict=verdict, text=f"{p1}\n\n{p2}\n\n{p3}", top_fixes=top_fixes)
