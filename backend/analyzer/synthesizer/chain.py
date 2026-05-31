@@ -46,18 +46,25 @@ async def synthesize_with_chain(repo_name: str, dimensions: list[DimensionResult
     prompt = prompt_builder.build(repo_name, dimensions, examples)
 
     for p in providers:
+        name = type(p).__name__
         try:
             if not await p.available():
+                print(f"[chain] {name} unavailable, skipping")
                 continue
             raw = await asyncio.wait_for(p.complete(prompt), timeout=p.timeout)
-        except Exception:
+        except Exception as e:
+            print(f"[chain] {name} failed: {type(e).__name__}: {e}")
             continue
         if not raw or len(raw.strip()) < MIN_OUTPUT_LEN:
+            print(f"[chain] {name} returned too-short output ({len(raw or '')} chars)")
             continue
         parsed = _parse_llm_output(raw)
         if parsed is None:
+            print(f"[chain] {name} output did not match VERDICT/TOP_FIXES schema. First 400 chars:\n{raw[:400]}\n---")
             continue
         verdict, text, fixes = parsed
+        print(f"[chain] {name} succeeded")
         return SynthesisResult(verdict=verdict, text=text, top_fixes=fixes[:3])
 
+    print("[chain] all providers failed — using templated fallback")
     return templated.synthesize(repo_name, dimensions, examples)
