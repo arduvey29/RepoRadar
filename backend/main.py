@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
+from sse_starlette.sse import EventSourceResponse
+import json
 import httpx, os, uuid, asyncio, traceback
 from datetime import datetime, timezone
 from models import AnalyzeRequest, AnalyzeResponse, ReportResult
@@ -48,18 +50,34 @@ async def healthz():
 def _overall_grade(score: float) -> str:
     return "A" if score >= 8.5 else "B" if score >= 6.5 else "C" if score >= 4.5 else "D" if score >= 3.0 else "F"
 
+
+_PROGRESS_QUEUES: dict[str, asyncio.Queue] = {}
+
+
+def _emit(report_id: str, event: dict):
+    q = _PROGRESS_QUEUES.get(report_id)
+    if q is not None:
+        q.put_nowait(event)
+
+
+async def _run_dim(report_id: str, key: str, coro):
+    result = await coro
+    _emit(report_id, {"type": "dimension", "key": key, "score": result.score})
+    return result
+
+
 async def run_analysis(report_id: str, repo_url: str):
     repo_path = None
     try:
         async with analysis_semaphore:
             repo_path, repo_name = await clone_repo(repo_url)
             dims = await asyncio.gather(
-                code_quality.analyze(repo_path),
-                docs.analyze(repo_path),
-                deps.analyze(repo_path),
-                tests_mod.analyze(repo_path),
-                ci.analyze(repo_path),
-                security.analyze(repo_path),
+                _run_dim(report_id, "code_quality", code_quality.analyze(repo_path)),
+                _run_dim(report_id, "docs", docs.analyze(repo_path)),
+                _run_dim(report_id, "deps", deps.analyze(repo_path)),
+                _run_dim(report_id, "tests", tests_mod.analyze(repo_path)),
+                _run_dim(report_id, "ci", ci.analyze(repo_path)),
+                _run_dim(report_id, "security", security.analyze(repo_path)),
             )
             synth = await synthesize_with_chain(repo_name, list(dims), PROVIDERS)
             overall = sum(d.score for d in dims) / len(dims)
@@ -74,9 +92,12 @@ async def run_analysis(report_id: str, repo_url: str):
                 shareable_url=f"/report/{report_id}",
             )
             store.set_report(report_id, report)
+        _emit(report_id, {"type": "complete", "report_id": report_id})
     except Exception as e:
         traceback.print_exc()
-        store.set_error(report_id, f"{type(e).__name__}: {e}" or "Unknown error")
+        msg = f"{type(e).__name__}: {e}" or "Unknown error"
+        store.set_error(report_id, msg)
+        _emit(report_id, {"type": "error", "error": msg})
     finally:
         if repo_path:
             shutil.rmtree(repo_path, ignore_errors=True)
@@ -96,6 +117,9 @@ async def analyze(request: Request, req: AnalyzeRequest, bg: BackgroundTasks,
     report_id = str(uuid.uuid4())
     store.set_status(report_id, "processing")
     store.cache_url(req.repo_url, report_id)
+    # Create the SSE queue eagerly so dimension events aren't dropped if the
+    # client opens the stream a tick after submitting.
+    _PROGRESS_QUEUES.setdefault(report_id, asyncio.Queue())
     bg.add_task(run_analysis, report_id, req.repo_url)
     return AnalyzeResponse(report_id=report_id, status="processing")
 
@@ -106,6 +130,23 @@ async def get_report(report_id: str):
         raise HTTPException(404, "Report not found")
     return AnalyzeResponse(report_id=report_id, status=entry["status"],
                            report=entry.get("report"), error=entry.get("error"))
+
+
+@app.get("/report/{report_id}/stream")
+async def stream(report_id: str):
+    q = _PROGRESS_QUEUES.setdefault(report_id, asyncio.Queue())
+
+    async def gen():
+        try:
+            while True:
+                event = await q.get()
+                yield {"data": json.dumps(event)}
+                if event.get("type") in ("complete", "error"):
+                    break
+        finally:
+            _PROGRESS_QUEUES.pop(report_id, None)
+
+    return EventSourceResponse(gen())
 
 
 _OG_CACHE: dict[str, bytes] = {}
