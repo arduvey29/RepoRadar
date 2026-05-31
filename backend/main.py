@@ -10,6 +10,7 @@ from analyzer.dimensions import code_quality, docs, deps, tests as tests_mod, ci
 from analyzer.synthesizer.chain import synthesize_with_chain
 from analyzer.synthesizer.providers import GroqProvider, GeminiProvider, OllamaProvider
 from share.og_image import render as render_og
+from share.badge_svg import render_badge
 import shutil
 
 app = FastAPI(title="RepoRadar API")
@@ -110,3 +111,13 @@ async def og_image(report_id: str):
         _OG_CACHE[report_id] = render_og(entry["report"])
     return Response(content=_OG_CACHE[report_id], media_type="image/png",
                     headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/badge/{report_id}.svg")
+async def badge(report_id: str):
+    entry = store.get(report_id)
+    if not entry or not entry.get("report"):
+        raise HTTPException(404, "Report not found")
+    svg = render_badge(entry["report"])
+    return Response(content=svg, media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=3600"})
