@@ -18,10 +18,14 @@ from share.badge_svg import render_badge
 from rate_limit import limiter, analysis_semaphore, PER_MIN
 import shutil
 
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+ALLOWED_ORIGINS = [FRONTEND_URL] if FRONTEND_URL else ["*"]
+
 app = FastAPI(title="RepoRadar API")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS,
+                   allow_methods=["*"], allow_headers=["*"])
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 PROVIDERS = [GroqProvider(), GeminiProvider(), OllamaProvider()]
