@@ -1,6 +1,8 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 import httpx, os, uuid, asyncio, traceback
 from datetime import datetime, timezone
 from models import AnalyzeRequest, AnalyzeResponse, ReportResult
@@ -11,9 +13,12 @@ from analyzer.synthesizer.chain import synthesize_with_chain
 from analyzer.synthesizer.providers import GroqProvider, GeminiProvider, OllamaProvider
 from share.og_image import render as render_og
 from share.badge_svg import render_badge
+from rate_limit import limiter, analysis_semaphore, PER_MIN
 import shutil
 
 app = FastAPI(title="RepoRadar API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
@@ -46,28 +51,29 @@ def _overall_grade(score: float) -> str:
 async def run_analysis(report_id: str, repo_url: str):
     repo_path = None
     try:
-        repo_path, repo_name = await clone_repo(repo_url)
-        dims = await asyncio.gather(
-            code_quality.analyze(repo_path),
-            docs.analyze(repo_path),
-            deps.analyze(repo_path),
-            tests_mod.analyze(repo_path),
-            ci.analyze(repo_path),
-            security.analyze(repo_path),
-        )
-        synth = await synthesize_with_chain(repo_name, list(dims), PROVIDERS)
-        overall = sum(d.score for d in dims) / len(dims)
-        report = ReportResult(
-            report_id=report_id, repo_url=repo_url, repo_name=repo_name,
-            overall_score=round(overall, 1), overall_grade=_overall_grade(overall),
-            dimensions=list(dims),
-            verdict=synth.verdict,
-            synthesis=synth.text,
-            top_fixes=synth.top_fixes,
-            generated_at=datetime.now(timezone.utc).isoformat(),
-            shareable_url=f"/report/{report_id}",
-        )
-        store.set_report(report_id, report)
+        async with analysis_semaphore:
+            repo_path, repo_name = await clone_repo(repo_url)
+            dims = await asyncio.gather(
+                code_quality.analyze(repo_path),
+                docs.analyze(repo_path),
+                deps.analyze(repo_path),
+                tests_mod.analyze(repo_path),
+                ci.analyze(repo_path),
+                security.analyze(repo_path),
+            )
+            synth = await synthesize_with_chain(repo_name, list(dims), PROVIDERS)
+            overall = sum(d.score for d in dims) / len(dims)
+            report = ReportResult(
+                report_id=report_id, repo_url=repo_url, repo_name=repo_name,
+                overall_score=round(overall, 1), overall_grade=_overall_grade(overall),
+                dimensions=list(dims),
+                verdict=synth.verdict,
+                synthesis=synth.text,
+                top_fixes=synth.top_fixes,
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                shareable_url=f"/report/{report_id}",
+            )
+            store.set_report(report_id, report)
     except Exception as e:
         traceback.print_exc()
         store.set_error(report_id, f"{type(e).__name__}: {e}" or "Unknown error")
@@ -76,7 +82,9 @@ async def run_analysis(report_id: str, repo_url: str):
             shutil.rmtree(repo_path, ignore_errors=True)
 
 @app.post("/analyze", response_model=AnalyzeResponse)
-async def analyze(req: AnalyzeRequest, bg: BackgroundTasks, force: bool = Query(False)):
+@limiter.limit(f"{PER_MIN}/minute")
+async def analyze(request: Request, req: AnalyzeRequest, bg: BackgroundTasks,
+                  force: bool = Query(False)):
     if not force:
         cached_id = store.lookup_url_cache(req.repo_url)
         cached = store.get(cached_id) if cached_id else None
