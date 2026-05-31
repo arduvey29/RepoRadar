@@ -36,7 +36,7 @@ radar-venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-#### Environment variables (optional)
+#### Environment variables
 
 Create a `.env` file inside `backend/` (or set them in your shell). All are optional — the chain falls back gracefully if keys are missing.
 
