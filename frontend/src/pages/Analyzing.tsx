@@ -6,6 +6,18 @@ import { mockReports } from "../lib/mock-reports"
 import { postAnalyze, getReport } from "../lib/api"
 import { subscribeProgress } from "../lib/sse"
 
+function useResponsiveRadarSize(): number {
+  const [size, setSize] = useState(() =>
+    typeof window === "undefined" ? 340 : Math.min(340, window.innerWidth - 48)
+  )
+  useEffect(() => {
+    const onResize = () => setSize(Math.min(340, window.innerWidth - 48))
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [])
+  return size
+}
+
 export function Analyzing() {
   const loc = useLocation() as { state?: { url?: string; report_id?: string } }
   const nav = useNavigate()
@@ -15,6 +27,7 @@ export function Analyzing() {
   // Skeleton dimensions for the radar shell; values are filled by SSE events as
   // each real analyzer completes.
   const skeleton = mockReports["mock-b"].dimensions
+  const radarSize = useResponsiveRadarSize()
 
   const [done, setDone] = useState<Set<string>>(new Set())
   const [values, setValues] = useState<Record<string, number>>({})
@@ -101,7 +114,7 @@ export function Analyzing() {
       <div className="w-full max-w-lg flex flex-col items-center">
         <h2 className="text-center text-lg mb-1 text-text">Auditing repository…</h2>
         <p className="text-center text-sm text-text-dim mb-6 break-all">{url ?? "your repo"}</p>
-        <RadarChart dimensions={skeleton} size={340} values={values} sweep sweepSpeed={2} />
+        <RadarChart dimensions={skeleton} size={radarSize} values={values} sweep sweepSpeed={2} />
         <div className="w-full mt-8">
           <LoadingState completed={done} scores={values} />
         </div>
