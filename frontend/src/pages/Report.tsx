@@ -83,6 +83,45 @@ export function Report() {
     }
   }, [id])
 
+  // Inject OG meta tags so social cards show the rendered radar preview.
+  useEffect(() => {
+    if (!report) return
+    const apiBase = import.meta.env.VITE_API_URL || ""
+    const ogUrl = `${apiBase}/og/${report.report_id}.png`
+    const shareUrl = `${window.location.origin}/report/${report.report_id}`
+    const title = `${report.repo_name} — ${report.overall_grade} ${report.overall_score.toFixed(1)} · RepoRadar`
+    const description = report.verdict || "Repository health report from RepoRadar."
+
+    const upsertMeta = (attr: "name" | "property", key: string, content: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
+      if (!el) {
+        el = document.createElement("meta")
+        el.setAttribute(attr, key)
+        document.head.appendChild(el)
+      }
+      el.setAttribute("content", content)
+      return el
+    }
+
+    const original = document.title
+    document.title = title
+    const tags = [
+      upsertMeta("property", "og:title", title),
+      upsertMeta("property", "og:description", description),
+      upsertMeta("property", "og:image", ogUrl),
+      upsertMeta("property", "og:url", shareUrl),
+      upsertMeta("property", "og:type", "website"),
+      upsertMeta("name", "twitter:card", "summary_large_image"),
+      upsertMeta("name", "twitter:title", title),
+      upsertMeta("name", "twitter:description", description),
+      upsertMeta("name", "twitter:image", ogUrl),
+    ]
+    return () => {
+      document.title = original
+      tags.forEach((t) => t.remove())
+    }
+  }, [report])
+
   // Before paint, place the hero at viewport center while not yet revealed.
   useLayoutEffect(() => {
     if (revealed || !report) {
