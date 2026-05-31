@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { mockReports } from "../lib/mock-reports"
 import { getReport } from "../lib/api"
@@ -42,7 +42,6 @@ function useRevealOnScroll(): boolean {
 
 export function Report() {
   const { id } = useParams()
-  const nav = useNavigate()
   const [report, setReport] = useState<ReportResult | null>(() =>
     id && mockReports[id] ? mockReports[id] : null
   )
@@ -159,9 +158,9 @@ export function Report() {
               <div style={revealStyle}>
                 <ShareBar
                   reportId={report.report_id}
+                  repoUrl={report.repo_url}
                   grade={report.overall_grade}
                   score={report.overall_score}
-                  onReanalyze={() => nav("/")}
                 />
               </div>
             </div>

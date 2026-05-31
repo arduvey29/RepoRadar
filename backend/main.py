@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 import httpx, os, uuid, asyncio, traceback
@@ -76,14 +76,15 @@ async def run_analysis(report_id: str, repo_url: str):
             shutil.rmtree(repo_path, ignore_errors=True)
 
 @app.post("/analyze", response_model=AnalyzeResponse)
-async def analyze(req: AnalyzeRequest, bg: BackgroundTasks):
-    cached_id = store.lookup_url_cache(req.repo_url)
-    cached = store.get(cached_id) if cached_id else None
-    # Only short-circuit on a genuinely finished report — a still-processing
-    # entry must fall through so the client gets a real report_id to poll.
-    if cached and cached.get("status") == "complete" and cached.get("report"):
-        return AnalyzeResponse(report_id=cached_id, status="complete", cached=True,
-                               report=cached["report"])
+async def analyze(req: AnalyzeRequest, bg: BackgroundTasks, force: bool = Query(False)):
+    if not force:
+        cached_id = store.lookup_url_cache(req.repo_url)
+        cached = store.get(cached_id) if cached_id else None
+        # Only short-circuit on a genuinely finished report — a still-processing
+        # entry must fall through so the client gets a real report_id to poll.
+        if cached and cached.get("status") == "complete" and cached.get("report"):
+            return AnalyzeResponse(report_id=cached_id, status="complete", cached=True,
+                                   report=cached["report"])
     report_id = str(uuid.uuid4())
     store.set_status(report_id, "processing")
     store.cache_url(req.repo_url, report_id)

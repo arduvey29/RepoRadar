@@ -8,9 +8,10 @@ import { postAnalyze, getReport } from "../lib/api"
 const ORDER = ["code_quality", "docs", "deps", "tests", "ci", "security"]
 
 export function Analyzing() {
-  const loc = useLocation() as { state?: { url?: string } }
+  const loc = useLocation() as { state?: { url?: string; report_id?: string } }
   const nav = useNavigate()
   const url = loc.state?.url
+  const presetReportId = loc.state?.report_id
 
   // Decorative build target while we wait. Real per-spoke values arrive via SSE in Task 37.
   const target = mockReports["mock-b"]
@@ -21,14 +22,42 @@ export function Analyzing() {
   const [buildDone, setBuildDone] = useState(false)
   const [realId, setRealId] = useState<string | null>(null)
 
-  // Kick off the real analysis + poll for completion.
+  // Kick off the real analysis (or use a preset report_id from Re-analyze) + poll.
   useEffect(() => {
     if (!url) {
       nav("/")
       return
     }
     let cancelled = false
+
+    const startPolling = (id: string) => {
+      const poll = async () => {
+        if (cancelled) return
+        try {
+          const cur = await getReport(id)
+          if (cancelled) return
+          if (cur.status === "complete") {
+            setRealId(id)
+            return
+          }
+          if (cur.status === "error") {
+            nav("/", { state: { error: cur.error || "Analysis failed" } })
+            return
+          }
+        } catch {
+          /* transient — keep polling */
+        }
+        setTimeout(poll, 1200)
+      }
+      poll()
+    }
+
     ;(async () => {
+      if (presetReportId) {
+        // Re-analyze flow already POSTed /analyze?force=1 and gave us the id.
+        startPolling(presetReportId)
+        return
+      }
       try {
         const res = await postAnalyze(url)
         if (cancelled) return
@@ -36,26 +65,7 @@ export function Analyzing() {
           nav(`/report/${res.report_id}`)
           return
         }
-        const id = res.report_id
-        const poll = async () => {
-          if (cancelled) return
-          try {
-            const cur = await getReport(id)
-            if (cancelled) return
-            if (cur.status === "complete") {
-              setRealId(id)
-              return
-            }
-            if (cur.status === "error") {
-              nav("/", { state: { error: cur.error || "Analysis failed" } })
-              return
-            }
-          } catch {
-            /* transient — keep polling */
-          }
-          setTimeout(poll, 1200)
-        }
-        poll()
+        startPolling(res.report_id)
       } catch (e) {
         if (!cancelled) nav("/", { state: { error: (e as Error).message } })
       }
